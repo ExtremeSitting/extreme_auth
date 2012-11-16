@@ -47,7 +47,7 @@ def main():
                     "username":username,"apiKey":apikey} } }
     headers = {'content-type': 'application/json'}
     r = requests.post('https://auth.api.rackspacecloud.com/v2.0/tokens',
-                        auth_data=json.dumps(payload), headers=headers)
+                        data=json.dumps(payload), headers=headers)
     auth_data = json.loads(r.text)[u'access']
     
     # Now to parse the mass of crap we just got.
@@ -81,11 +81,11 @@ def main():
                       products[service]['endpoints'][0]['publicURL']
     return services
 
-  auth_data = Authenticate(username, apikey)
-  stripper(auth_data, services)
+  Authenticate(username, apikey, services)
   
-  def list_servers_NG():
-    
+  for k, v in services.items():
+    print k, "\t", v
+  
 
 if __name__== "__main__":
   main()
