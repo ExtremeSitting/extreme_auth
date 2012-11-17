@@ -33,7 +33,9 @@ def main():
 
   args = parser.parse_args()
   
-  def Authenticate(username, apikey, services):
+  services = {}
+  
+  def Authenticate(username, apikey):
     # Auth!
     payload = { "auth":{
                 "RAX-KSKEY:apiKeyCredentials":{
@@ -58,10 +60,9 @@ def main():
       pass
       
     # Pull DDI and add it to the dict.
-    try: 
-    if 'tenant' in auth_data['token']:
-      if 'id' in auth_data['token']['tenant']:
-        services['account_id'] = auth_data['token']['tenant']['id']
+      if 'tenant' in auth_data['token']:
+        if 'id' in auth_data['token']['tenant']:
+          services['account_id'] = auth_data['token']['tenant']['id']
     # Pull the default region
     if 'user' in auth_data:
       if 'RAX-AUTH: defaultRegion' in auth_data['user']:
