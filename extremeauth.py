@@ -32,13 +32,6 @@ def main():
                           choices=["DFW", "ORD"])
 
   args = parser.parse_args()
-
-  # re-assign arg returns
-  username = args.username
-  apikey = args.apikey
-  region =  args.region
-  # Initialize the all knowing endpoint dict
-  services = {}
   
   def Authenticate(username, apikey, services):
     # Auth!
@@ -53,35 +46,53 @@ def main():
     # Now to parse the mass of crap we just got.
     
     # Pull the token and add it to the services dict.
-    if 'token' in auth_data:
-        if 'id' in auth_data['token']:
-            services['token'] = auth_data['token']['id']
-    # Pull DDI and add it to the dict.        
+    try:
+      auth_data['token']
+      try:
+        services['token'] = auth_data['token']['id']
+      except KeyError:
+        print 'No auth token found'
+        pass
+    except KeyError:
+      print 'No auth token found'
+      pass
+      
+    # Pull DDI and add it to the dict.
+    try: 
     if 'tenant' in auth_data['token']:
       if 'id' in auth_data['token']['tenant']:
         services['account_id'] = auth_data['token']['tenant']['id']
+    # Pull the default region
+    if 'user' in auth_data:
+      if 'RAX-AUTH: defaultRegion' in auth_data['user']:
+        services['defaultRegion'] = auth_data['user']\
+          ['RAX-AUTH: defaultRegion']
 
     # The following mess evaluates the remaining json in the serviceCatalog
     # section and adds it all to the dict.
-    if 'serviceCatalog' in  auth_data:
+    try:
       products = auth_data['serviceCatalog']
       for service in range(len(products)):
-          if len(products[service]['endpoints']) > 1:
-            for dc in range(len(products[service]['endpoints'])):
-              if products[service]['name'] not in services:
-                services[products[service]['name']] = \
-                        [(products[service]['endpoints'][dc]['region'], \
-                        products[service]['endpoints'][dc]['publicURL'])]
-              else:
-                services[products[service]['name']].append(\
-                    (products[service]['endpoints'][dc]['region'], \
-                    products[service]['endpoints'][dc]['publicURL']))
-          else:
-            services[products[service]['name']] = \
-                      products[service]['endpoints'][0]['publicURL']
+        if len(products[service]['endpoints']) > 1:
+          for dc in range(len(products[service]['endpoints'])):
+            if products[service]['name'] not in services:
+              services[products[service]['name']] = \
+                      [(products[service]['endpoints'][dc]['region'], \
+                      products[service]['endpoints'][dc]['publicURL'])]
+            else:
+              services[products[service]['name']].append(\
+                  (products[service]['endpoints'][dc]['region'], \
+                  products[service]['endpoints'][dc]['publicURL']))
+        else:
+          services[products[service]['name']] = \
+                    products[service]['endpoints'][0]['publicURL']
+    except KeyError:
+      print 'No services found'
+      pass
+    
     return services
 
-  Authenticate(username, apikey, services)
+  services = Authenticate(args.username, args.apikey)
   
   for k, v in services.items():
     print k, "\t", v
